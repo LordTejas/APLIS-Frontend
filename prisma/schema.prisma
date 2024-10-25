@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  username  String @unique
+  email     String @unique
+  password  String
+  role      UserRole @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum UserRole {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+model Student {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String  @unique
+  username    String
+  email       String   @unique
+  password    String
+  enrollments Enrollment[] 
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Enrollment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  studentId String   @db.ObjectId
+  courseId  String   @db.ObjectId
+  progress  Float    // Progress percentage (0 to 100)
+  student   Student  @relation(fields: [studentId], references: [id])
+  course    Course   @relation(fields: [courseId], references: [id])
+}
+
+model Course {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  modules     Module[]
+  quizzes     Quiz[]
+  assignments  Assignment[]
+  enrollments Enrollment[]
+}
+
+model Module {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  courseId    String        @db.ObjectId
+  content     ModuleContent[]
+  course      Course        @relation(fields: [courseId], references: [id])
+}
+
+model ModuleContent {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  moduleId    String   @db.ObjectId
+  content     String   // This could be a URL for videos, HTML content, etc.
+  attachments String[] // Array of attachment URLs or paths
+  module      Module   @relation(fields: [moduleId], references: [id])
+}
+
+model Quiz {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  courseId    String   @db.ObjectId
+  title       String
+  questions   String[] // Array of questions or a more complex structure
+  course      Course   @relation(fields: [courseId], references: [id])
+}
+
+model Assignment {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  courseId    String   @db.ObjectId
+  title       String
+  description String?
+  dueDate     DateTime?
+  course      Course   @relation(fields: [courseId], references: [id])
+}
+
