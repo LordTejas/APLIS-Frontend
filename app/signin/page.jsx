@@ -1,119 +1,141 @@
 'use client';
 
 import { useState } from 'react';
-import { createUser, getUserByEmailAndPassword } from '../../actions/users/create-user';
-import useUserStore from '../user.zustand';
+import { useRouter } from 'next/navigation'
+import { createUser, getUserByEmailAndPassword } from '../../actions/auth';
+import Tabs from '@/components/Tabs';
+import Input from '@/components/Input';
 
 const SignInPage = () => {
   const [isSignIn, setIsSignIn] = useState(true);
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [selectedTabIndex, setSelectedTabIndex] = useState(0);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const { setUser } = useUserStore();
-
-  const handleToggle = () => {
-    setIsSignIn(!isSignIn);
-    setError('');
-    setSuccess('');
-  };
+  const router = useRouter();
+  const [confirmPassword, setConfirmPassword] = useState(''); // Added confirm password state
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
 
+    // Validate confirm password if signing up
+    if (!isSignIn && password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    const roles = ['STUDENT', 'TEACHER'];
+    const role = roles[selectedTabIndex];
+
     try {
+      let user;
       if (isSignIn) {
-        const response = await fetch('/api/getUser', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email, password }),
-        });
-
-        if (!response.ok) {
-          throw new Error('Invalid credentials');
-        }
-
-        const { user } = await response.json();
-        setUser(user); // Store user details in Zustand
-        setSuccess(`Welcome back, ${user.username}!`);
+        user = await getUserByEmailAndPassword(email, password, role);
       } else {
-        const response = await fetch('/api/createUser', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email, username, password }),
-        });
-
-        if (!response.ok) {
-          throw new Error('User creation failed');
-        }
-
-        const { newUser } = await response.json();
-        setUser(newUser); // Store user details in Zustand
-        setSuccess('User created successfully! Please sign in.');
+        user = await createUser(email, username, password, role);
       }
+      setSuccess(isSignIn ? `Welcome back, ${user.username}!` : 'User created successfully! Please sign in.');
+
+      // Redirect to dashboard
+      router.push('/dashboard');
+
     } catch (err) {
       setError(err.message);
     }
   };
 
+  const tabs = [
+    {
+      title: 'Students',
+    },
+    {
+      title: 'Teachers',
+    }
+  ];
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-2xl font-bold mb-4">{isSignIn ? 'Sign In' : 'Sign Up'}</h1>
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md w-80">
+    <div className="flex flex-col items-center justify-center gap-2 min-h-screen bg-background">
+
+
+      <div className="bg-white p-6 rounded shadow-md w-80 flex flex-col gap-4">
+        <Tabs data={tabs} selectedTabIndex={selectedTabIndex} setSelectedTabIndex={setSelectedTabIndex} />
         {error && <p className="text-red-500">{error}</p>}
         {success && <p className="text-green-500">{success}</p>}
-        {!isSignIn && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-            />
-          </div>
-        )}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-          />
-        </div>
+        <Input
+          id="email"
+          label="Email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+        />
+        {isSignIn ?
+          (
+            <>
+              <Input
+                id="password"
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+              />
+            </>
+          )
+          :
+          ( // Conditionally render username and confirm password fields
+            <>
+              <Input
+                id="username"
+                label="Username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+              />
+              <Input
+                id="password"
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+              />
+              <Input
+                id="confirm-password"
+                label="Confirm Password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+              />
+            </>
+          )}
         <button
           type="submit"
+          onClick={handleSubmit}
           className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
         >
           {isSignIn ? 'Sign In' : 'Sign Up'}
         </button>
-      </form>
-      <button
-        onClick={handleToggle}
-        className="mt-4 text-blue-500 hover:underline"
-      >
-        {isSignIn ? 'Need an account? Sign Up' : 'Already have an account? Sign In'}
-      </button>
+
+        {
+          isSignIn ? (
+            <p className="mt-4 text-center">Don&apos;t have an account? <span className="text-blue-500 cursor-pointer" onClick={() => setIsSignIn(false)}>Sign up</span></p>
+          ) : (
+            <p className="mt-4 text-center">Already have an account? <span className="text-blue-500 cursor-pointer" onClick={() => setIsSignIn(true)}>Sign in</span></p>
+          )
+        }
+      </div>
     </div>
   );
 };
