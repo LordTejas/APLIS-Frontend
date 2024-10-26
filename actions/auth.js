@@ -4,7 +4,8 @@
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers'
-import { createSession } from '@/app/lib/session'
+import { createSession, decrypt, deleteSession } from '@/lib/session'
+import { redirect } from 'next/navigation';
 
 const prisma = new PrismaClient();
 
@@ -87,16 +88,18 @@ export const getUserByEmailAndPassword = async (email, password, role) => {
   }
 };
 
-export const getSessionFromToken = async () => {
+export const getSession = async () => {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('sessionToken');
+    const cookieStore = await cookies();
+    const token = cookieStore.get('session')?.value;
 
     if (!token) {
       return null;
     }
 
-    const session = JSON.parse(token);
+    const session = await decrypt(token);
+
+    console.log("[SESSION] ", session);
 
     return session;
 
@@ -106,6 +109,6 @@ export const getSessionFromToken = async () => {
 }
 
 export async function logout() {
-  deleteSession()
+  await deleteSession()
   redirect('/signin')
 }

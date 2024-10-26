@@ -1,20 +1,39 @@
-import { verifySession } from "@/app/lib/dal";
+'use client';
 
-const DashboardPage = async () => {
+import Header from "./_components/Header";
+import SideBar from "./_components/SideBar";
 
-  const session = await verifySession();
+import useDashboardStore from "./_zustand/dashboard.zustand";
+import useSession from "@/app/hooks/useSession";
+
+const DashboardPage = () => {
+
+  
+  const { menu, setMenu } = useDashboardStore();
+  const {session, loading, error} = useSession();
+  
+  console.log(session);
+
+  if (!session?.user?.id) {
+    return null;
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
-      <p className="text-lg">Welcome to your dashboard!</p>
-      <div className="mt-6">
-        <button className="bg-blue-500 text-white px-4 py-2 rounded">View Profile</button>
-        <button className="bg-green-500 text-white px-4 py-2 rounded ml-2">Settings</button>
-      </div>
+    <div className="w-full h-screen flex flex-col">
 
-      <p>{session?.user?.username}</p>
-      <p>{JSON.stringify(session, null, 2)}</p>
+      <div className="">
+        <Header session={session} />
+      </div>
+      
+      <div className="flex-1 flex">
+        <div className="w-[20vw]">
+          <SideBar session={session} />
+        </div>
+
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+        </div>
+      </div>
 
     </div>
   );

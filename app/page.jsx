@@ -1,4 +1,4 @@
-import { verifySession } from "@/app/lib/dal";
+import { verifySession } from "@/lib/dal";
 
 // eslint-disable-next-line @next/next/no-async-client-component
 export default async function Home() {
