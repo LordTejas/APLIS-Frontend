@@ -6,10 +6,16 @@ import SideBar from "./_components/SideBar";
 import useDashboardStore from "./_zustand/dashboard.zustand";
 import useSession from "@/app/hooks/useSession";
 
+import CoursesView from "./_components/Course/CoursesView";
+import EnrollmentsView from "./_components/Enrollments/EnrollmentsView";
+import StudentsView from "./_components/Students/StudentsView";
+import SettingsView from "./_components/Settings/SettingsView";
+import ModulesView from "./_components/Course/ModulesView";
+
 const DashboardPage = () => {
 
   
-  const { menu, setMenu } = useDashboardStore();
+  const { menu, subMenu } = useDashboardStore();
   const {session, loading, error} = useSession();
   
   console.log(session);
@@ -31,7 +37,11 @@ const DashboardPage = () => {
         </div>
 
         <div className="flex-1">
-          <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+          {menu === 'courses' && subMenu === null && <CoursesView />}
+          {menu === 'courses' && subMenu === 'modules' && <ModulesView />}
+          {menu === 'courses' && subMenu === 'enrollments' && <EnrollmentsView />}
+          {menu === 'students' && <StudentsView />}
+          {menu === 'settings' && <SettingsView />}
         </div>
       </div>
 

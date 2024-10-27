@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createUser, getUserByEmailAndPassword } from '../../actions/auth';
 import Tabs from '@/components/Tabs';
 import Input from '@/components/Input';
+import toast from 'react-hot-toast'; // Import toast
 
 const SignInPage = () => {
   const [isSignIn, setIsSignIn] = useState(true);
@@ -24,7 +25,7 @@ const SignInPage = () => {
 
     // Validate confirm password if signing up
     if (!isSignIn && password !== confirmPassword) {
-      setError("Passwords do not match.");
+      toast.error("Passwords do not match."); // Show error toast
       return;
     }
 
@@ -38,13 +39,13 @@ const SignInPage = () => {
       } else {
         user = await createUser(email, username, password, role);
       }
-      setSuccess(isSignIn ? `Welcome back, ${user.username}!` : 'User created successfully! Please sign in.');
+      toast.success(isSignIn ? `Welcome back, ${user.username}!` : 'User created successfully! Please sign in.'); // Show success toast
 
       // Redirect to dashboard
       router.push('/dashboard');
 
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message); // Show error toast
     }
   };
 
