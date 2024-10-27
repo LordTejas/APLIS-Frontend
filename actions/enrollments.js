@@ -11,6 +11,7 @@ export const createEnrollment = async (studentId, courseId) => {
       data: {
         studentId,
         courseId,
+        progress: {}
       },
     });
     return newEnrollment;

@@ -45,3 +45,22 @@ export const getCourses = async () => {
   }
 };
 
+// Get coureses that are enrolled in by the user
+export const getEnrolledCourses = async (userId) => {
+  try {
+    const enrollments = await prisma.enrollment.findMany({
+      where: { studentId: userId },
+    });
+
+    const courses = await prisma.course.findMany({
+      where: { id: { in: enrollments.map(e => e.courseId) } },
+    });
+
+    return courses;
+  } catch (error) {
+    console.error("Error fetching enrolled courses:", error);
+    throw new Error("Failed to fetch enrolled courses");
+  } finally {
+    await prisma.$disconnect();
+  }
+};

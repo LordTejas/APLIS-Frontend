@@ -1,6 +1,6 @@
 'use client';
 
-import { FcImport, FcPortraitMode, FcReadingEbook } from "react-icons/fc";
+import { FcPortraitMode, FcReadingEbook, FcDoughnutChart } from "react-icons/fc";
 import useSession from '@/app/hooks/useSession';
 
 import useDashboardStore from '../_zustand/dashboard.zustand';
@@ -17,6 +17,7 @@ const SideBar = () => {
 
   const STUDENT_ITEMS = [
     { title: 'Courses', menu: 'courses', icon: <FcReadingEbook /> },
+    { title: 'Analytics', menu: 'analytics', icon: <FcDoughnutChart /> },
   ];
 
   const items = role === 'TEACHER' ? TEACHER_ITEMS : STUDENT_ITEMS;

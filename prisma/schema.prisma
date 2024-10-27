@@ -29,6 +29,7 @@ model Enrollment {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   studentId String   @db.ObjectId
   courseId  String   @db.ObjectId
+  progress  Json     // Keep track of the progress of the student in the course
   student   User     @relation(fields: [studentId], references: [id])
   course    Course   @relation(fields: [courseId], references: [id])
   createdAt DateTime @default(now())
@@ -36,54 +37,102 @@ model Enrollment {
 }
 
 model Course {
-  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  id          String          @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   description String?
   modules     Module[]
+  contents    ModuleContent[]
   quizzes     Quiz[]
   assignments Assignment[]
   enrollments Enrollment[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 }
 
 model Module {
-  id        String          @id @default(auto()) @map("_id") @db.ObjectId
-  title     String
-  courseId  String          @db.ObjectId
-  content   ModuleContent[]
-  course    Course          @relation(fields: [courseId], references: [id])
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  id          String          @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?         @default("")
+  courseId    String          @db.ObjectId
+  content     ModuleContent[]
+  course      Course          @relation(fields: [courseId], references: [id])
+  quizzes     Quiz[]
+  assignments Assignment[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 }
 
 model ModuleContent {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  courseId    String   @db.ObjectId
   moduleId    String   @db.ObjectId
-  content     String // This could be a URL for videos, HTML content, etc.
-  attachments String[] // Array of attachment URLs or paths
+  title       String
+  videoUrl    String?
+  content     String? // This could be HTML content or Text content
+  attachments String[] @default([])
   module      Module   @relation(fields: [moduleId], references: [id])
+  course      Course   @relation(fields: [courseId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
 model Quiz {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  courseId  String   @db.ObjectId
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  courseId  String    @db.ObjectId
+  moduleId  String?   @db.ObjectId // If the quiz is associated with a module
   title     String
-  questions String[] // Array of questions or a more complex structure
-  course    Course   @relation(fields: [courseId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  questions Question[]
+  course    Course    @relation(fields: [courseId], references: [id])
+  module    Module?   @relation(fields: [moduleId], references: [id])
+  dueDate   DateTime?
+  points    Int       @default(10)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+type Question {
+  title       String
+  description String?
+  options     Option[]
+  points      Int     @default(1)
+}
+
+type Option {
+  id        String
+  label     String
+  image     String?
+  isCorrect Boolean
 }
 
 model Assignment {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   courseId    String    @db.ObjectId
+  moduleId    String?   @db.ObjectId // If the assignment is associated with a module
   title       String
   description String?
   dueDate     DateTime?
+  points      Int       @default(10)
   course      Course    @relation(fields: [courseId], references: [id])
+  module      Module?   @relation(fields: [moduleId], references: [id])
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+model Submission {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  courseId    String    @db.ObjectId
+  moduleId    String?   @db.ObjectId
+  contentId   String    @db.ObjectId
+  userId      String    @db.ObjectId
+  contentType ContentType
+  score       Int       @default(0)
+  data        Json
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum ContentType {
+  CONTENT
+  ASSIGNMENT
+  QUIZ
 }

@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { getModules, createModule, updateModule, deleteModule } from '@/actions/modules'; // Assume these actions exist
 import useDashboardStore from '../../_zustand/dashboard.zustand';
-import useSession from '@/app/hooks/useSession'
+import useSession from '@/app/hooks/useSession';
+import Table from '@/components/Table'; // Import the Table component
+import toast from 'react-hot-toast';
+import { FaArrowLeft } from 'react-icons/fa';
 
 const ModulesView = () => {
   const { session } = useSession();
-  const { courseId } = useDashboardStore(state => state);
+  const { courseId, setSubMenu, setModuleId } = useDashboardStore(state => state);
   const [modules, setModules] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [currentModule, setCurrentModule] = useState({ title: '', content: '' });
+  const [currentModule, setCurrentModule] = useState({ title: '', description: '' });
 
   const role = session?.user?.role;
 
@@ -31,39 +34,76 @@ const ModulesView = () => {
   const handleCreateOrUpdateModule = async () => {
     try {
       if (isEditMode) {
-        await updateModule(currentModule); // Implement this action
+        await updateModule(currentModule);
       } else {
-        await createModule({ ...currentModule, courseId }); // Implement this action
+        await createModule({ ...currentModule, courseId });
       }
       setIsModalOpen(false);
       setCurrentModule({ title: '', content: '' });
       // Refetch modules
       const fetchedModules = await getModules(courseId);
       setModules(fetchedModules);
+      toast.success('Module saved successfully!');
     } catch (error) {
       console.error('Failed to create/update module:', error);
+      toast.error('Failed to create/update module.');
     }
-  };
-
-  const handleEditModule = (module) => {
-    setCurrentModule(module);
-    setIsEditMode(true);
-    setIsModalOpen(true);
   };
 
   const handleDeleteModule = async (moduleId) => {
     try {
-      await deleteModule(moduleId); // Implement this action
+      await deleteModule(moduleId);
       const fetchedModules = await getModules(courseId);
       setModules(fetchedModules);
+      toast.success('Module deleted successfully!');
     } catch (error) {
       console.error('Failed to delete module:', error);
+      toast.error('Failed to delete module.');
     }
   };
 
+  const moduleHeadersMap = new Map([
+    ['Module Name', 'title'],
+    ['Description', 'description'],
+    ['Created On', 'createdAt'],
+  ]);
+
+  const adminTeacherActions = [{
+    label: 'Delete',
+    bgColor: 'bg-red-500',
+    color: 'text-white',
+    onAction: handleDeleteModule,
+  }];
+
+
+  const moduleActions = [
+    {
+      label: 'View',
+      bgColor: 'bg-purple-500',
+      color: 'text-white',
+      onAction: (moduleId) => {
+        setModuleId(moduleId);
+        setSubMenu('module-content');
+      },
+    },
+    ...(role === 'TEACHER' || role === 'ADMIN' ? adminTeacherActions : []),
+  ];
+
+  const modulesData = modules.map(module => ({
+    id: module.id,
+    title: module.title,
+    description: module.description?.length > 50 ? module.description?.substring(0, 50) + '...' : module.description,
+    createdAt: module.createdAt.toLocaleDateString(),
+  }));
+
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Modules</h1>
+      <div className="flex gap-2 items-center mb-4">
+        <button onClick={() => setSubMenu(null)} className="bg-purple-500 text-white px-4 py-2 rounded-md mr-2">
+          <FaArrowLeft />
+        </button>
+        <h1 className="text-2xl font-bold">Modules</h1>
+      </div>
       <button
         onClick={() => {
           setIsEditMode(false);
@@ -73,22 +113,12 @@ const ModulesView = () => {
       >
         Create New Module
       </button>
-      <ul>
-        {modules.map((module) => (
-          <li key={module.id} className="flex justify-between items-center mb-2">
-            <span>{module.title}</span>
-            <div>
-              <button onClick={() => handleEditModule(module)} className="bg-blue-500 text-white px-2 py-1 rounded-md mr-2">
-                Edit
-              </button>
-              <button onClick={() => handleDeleteModule(module.id)} className="bg-red-500 text-white px-2 py-1 rounded-md">
-                Delete
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
-
+      <Table
+        rows={modulesData}
+        headersMap={moduleHeadersMap}
+        actions={moduleActions}
+        recordsPerPage={10}
+      />
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded shadow-md">
@@ -101,9 +131,9 @@ const ModulesView = () => {
               className="border p-2 mb-2 w-full"
             />
             <textarea
-              placeholder="Module Content"
-              value={currentModule.content}
-              onChange={(e) => setCurrentModule({ ...currentModule, content: e.target.value })}
+              placeholder="Module Description"
+              value={currentModule.description}
+              onChange={(e) => setCurrentModule({ ...currentModule, description: e.target.value })}
               className="border p-2 mb-4 w-full"
             />
             <button

@@ -6,12 +6,13 @@ const prisma = new PrismaClient();
 
 export const createModule = async (module) => {
   try {
-    const { title, courseId } = module;
+    const { title, courseId, description } = module;
 
     const newModule = await prisma.module.create({
       data: {
         title,
         courseId,
+        description,
       },
     });
 
@@ -31,6 +32,7 @@ export const getModules = async (courseId) => {
       select: {
         id: true,
         title: true,
+        description: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -74,10 +76,11 @@ export const deleteModule = async (id) => {
   }
 };
 
-export const createModuleContent = async (moduleId, contentData) => {
+export const createModuleContent = async (courseId, moduleId, contentData) => {
   try {
     const newContent = await prisma.moduleContent.create({
       data: {
+        courseId,
         moduleId,
         ...contentData,
       },
@@ -91,15 +94,36 @@ export const createModuleContent = async (moduleId, contentData) => {
   }
 };
 
-export const getModuleContents = async (moduleId) => {
+export const getModuleContents = async (courseId, moduleId) => {
   try {
     const contents = await prisma.moduleContent.findMany({
-      where: { moduleId },
+      where: { courseId, moduleId },
+      select: {
+        id: true,
+        title: true,
+        videoUrl: true,
+        content: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
+
     return contents;
   } catch (error) {
     console.error("Error fetching module contents:", error);
     throw new Error("Failed to fetch module contents");
+  } finally {
+    await prisma.$disconnect();
+  }
+};
+
+export const getModuleContent = async (id) => {
+  try {
+    const content = await prisma.moduleContent.findUnique({ where: { id } });
+    return content;
+  } catch (error) {
+    console.error("Error fetching module content:", error);
+    throw new Error("Failed to fetch module content");
   } finally {
     await prisma.$disconnect();
   }

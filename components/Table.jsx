@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 
 const Table = ({
-  headersMap,
   rows,
+  headersMap,
   actions = [],
   selectable = false,
   onSelectChange,
@@ -13,9 +13,6 @@ const Table = ({
   const totalPages = Math.ceil(rows.length / recordsPerPage);
 
   const currentSelected = new Set(selected);
-
-  console.log(selected);
-  console.log(currentSelected);
 
   const handleSelectChange = (id) => {
     const newSelected = new Set(currentSelected);
@@ -67,10 +64,15 @@ const Table = ({
                   {row[key]}
                 </td>
               ))}
-              {actions.length > 0 && <td className="px-6 py-4 whitespace-nowrap flex justify-between">
-                {actions.map((action, actionIndex) => (
-                  <button key={actionIndex} className="w-full bg-blue-500 text-white px-4 py-2 rounded-md" onClick={() => action.onAction(row.id)}>{action.label}</button>
-                ))}
+              {actions.length > 0 && <td className="px-6 py-4 whitespace-nowrap flex justify-start gap-2">
+                {actions.map((action, actionIndex) => {
+                  const bgColor = action.bgColor || 'bg-blue-500';
+                  const color = action.color || 'text-white';
+
+                  return (
+                    <button key={actionIndex} className={`min-w-[10ch] ${bgColor} ${color} px-4 py-2 rounded-md`} onClick={() => action.onAction(row.id)}>{action.label}</button>
+                  )
+                })}
               </td>}
             </tr>
           ))}
