@@ -17,7 +17,7 @@ const SideBar = () => {
 
   const STUDENT_ITEMS = [
     { title: 'Courses', menu: 'courses', icon: <FcReadingEbook /> },
-    { title: 'Analytics', menu: 'analytics', icon: <FcDoughnutChart /> },
+    { title: 'AI Feedback', menu: 'analytics', icon: <FcDoughnutChart /> },
   ];
 
   const items = role === 'TEACHER' ? TEACHER_ITEMS : STUDENT_ITEMS;
